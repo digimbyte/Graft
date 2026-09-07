@@ -7,11 +7,19 @@ Python, a compiler, an API key, or an existing Graft installation.
 
 ## Install
 
+For guided setup, `graft-setup` provides the repository steps and portable CLI
+helpers. It explains that the full six-tool service requires local MCP and asks
+before installing that integration. The skills-only archive is produced as
+`graft-setup.zip`; it does not register an MCP server by itself.
+
 Add this GitHub marketplace once on each Codex installation:
 
 ```sh
 codex plugin marketplace add digimbyte/Graft
 ```
+
+Install the guided setup skill with `codex plugin add graft-setup@digimbyte-graft`,
+or install a full platform plugin directly below.
 
 Then install **one** plugin for the machine running the task:
 
@@ -102,5 +110,26 @@ plugins, and commit the result. Keep the Node version in the workflow and build
 configuration aligned. Rebuild in a new output directory if a stage already
 exists (pass a directory to `build.mjs` and its runtime path to `test.mjs`).
 
-This is a third-party Git marketplace. Inclusion in OpenAI's curated plugin
-directory is a separate submission and review process.
+## Weekly upstream updates
+
+**Weekly upstream release** checks `trailhq/Graft`'s `main` branch every Monday at
+09:17 Australia/Brisbane. It can also be run manually from GitHub Actions.
+An unchanged upstream produces no build or release. New upstream commits are
+merged into a temporary candidate, keeping this fork's packaging and workflows.
+Each update increments the portable patch version and records the upstream SHA.
+
+Windows, Linux, and macOS must all pass the upstream regression suite and the
+packaged MCP integration tests. Only then are the versioned release assets
+published and `main` advanced to expose the new marketplace version. Conflicts
+or failed tests leave the installed release and marketplace unchanged. Check the
+workflow's failed run in GitHub Actions to resolve an incompatible upstream change.
+
+The publisher refuses to overwrite tags or advance a main branch that moved
+during the build. If publication fails after creating a tag, inspect that run and
+release before retrying; never overwrite an existing runtime release. GitHub can
+disable scheduled workflows after extended repository inactivity; check the
+workflow's enabled state if scheduled runs stop.
+
+This is a third-party Git marketplace. OpenAI's public submission portal does
+not currently accept local stdio MCP servers; see its
+[submission requirements](https://developers.openai.com/plugins/guides/submit-claude-plugin).

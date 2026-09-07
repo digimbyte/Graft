@@ -32,5 +32,23 @@ for (const [suffix, label] of [['windows', 'Windows x64'], ['unix', 'Linux x64 /
   writeFileSync(join(dir, 'skills/graft/SKILL.md'), `---\nname: graft\ndescription: Search code, inspect APIs, map repositories, and trace callers using the Graft tools.\n---\n\nUse the six Graft MCP tools for targeted code exploration. The first start indexes\nthe current Git repository locally, including worktrees. Later queries refresh\nthe graph as source changes. No model API key is needed for structural indexing.\n\nUse graft_repo_map to orient, graft_find_code to find definitions, graft_file_api\nto inspect signatures, graft_trace_calls to trace dependencies, graft_find_all\nfor indexed text search, and graft_check_freshness to inspect drift. Check source\nand use ordinary file search where graph coverage is incomplete. Respect the\nrepository's existing instructions and requested change scope.\n\nIf the task has no Git repository, Graft may expose no tools. Start a task in the\nintended repository; do not index a broad parent folder automatically.\n\nThe runtime downloads once per plugin release and is cached locally. Updating the\nplugin selects its pinned runtime; do not run npm upgrade or graft init to manage\nthis plugin. It does not install global hooks or rewrite agent instruction files.\nFor manual CLI use, run this plugin's ${launcher} with normal Graft arguments.\nWindows uses PowerShell -File; Unix uses sh. Keep the task working directory.\n\nDisable or uninstall through Codex Plugins. Runtime caches and repository graphs\nremain on disk for reuse; remove only the specific cache when requested.\n`);
   entries.push({ name, source: { source: 'local', path: `./plugins/${name}` }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Productivity' });
 }
+const setup = join(root, 'plugins/graft-setup');
+const setupSkill = join(setup, 'skills/graft-setup');
+mkdirSync(join(setup, '.codex-plugin'), { recursive: true });
+mkdirSync(join(setupSkill, 'scripts'), { recursive: true });
+writeFileSync(join(setup, '.codex-plugin/plugin.json'), JSON.stringify({
+  name: 'graft-setup', version: cfg.version,
+  description: 'Set up local Graft code navigation with repository guidance, portable CLI helpers, and approval before installing the full MCP integration.',
+  author: { name: 'digimbyte' }, license: 'MIT', homepage: 'https://github.com/digimbyte/Graft', skills: './skills/',
+  interface: { displayName: 'Graft Setup', shortDescription: 'Set up local code navigation with your approval.',
+    longDescription: 'Guides repository setup and provides portable Graft CLI helpers. The full six-tool service requires a separate local MCP plugin; installation is explained and requires your approval. Supports Windows x64, Linux x64, and Apple Silicon Macs.',
+    developerName: 'digimbyte', category: 'Productivity', capabilities: [], defaultPrompt: 'Check this repository and help me set up Graft. Ask before installing the full MCP integration.' }
+}, null, 2) + '\n');
+cpSync(join(root, 'LICENSE'), join(setup, 'LICENSE'));
+cpSync(join(root, 'scripts/portable/setup-skill.md'), join(setupSkill, 'SKILL.md'));
+for (const launcher of ['launch.ps1', 'launch.sh']) cpSync(join(root, 'scripts/portable', launcher), join(setupSkill, 'scripts', launcher));
+writeFileSync(join(setupSkill, 'scripts/runtime.json'), JSON.stringify(cfg, null, 2) + '\n');
+writeFileSync(join(setupSkill, 'scripts/release.env'), `GRAFT_TAG='${cfg.tag}'\nGRAFT_REPOSITORY='${cfg.repository}'\n`);
+entries.push({ name: 'graft-setup', source: { source: 'local', path: './plugins/graft-setup' }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Productivity' });
 mkdirSync(join(root, '.agents/plugins'), { recursive: true });
 writeFileSync(join(root, '.agents/plugins/marketplace.json'), JSON.stringify({ name: 'digimbyte-graft', interface: { displayName: 'Graft by digimbyte' }, plugins: entries }, null, 2) + '\n');

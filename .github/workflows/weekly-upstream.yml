@@ -1,0 +1,153 @@
+name: Weekly upstream release
+
+on:
+  schedule:
+    # Monday 09:17 Australia/Brisbane (Sunday 23:17 UTC).
+    - cron: '17 23 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: portable-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    if: github.repository == 'digimbyte/Graft' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    outputs:
+      changed: ${{ steps.prepare.outputs.changed }}
+      base: ${{ steps.prepare.outputs.base }}
+      sha: ${{ steps.prepare.outputs.sha }}
+      tag: ${{ steps.prepare.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.11.1'
+      - name: Fetch upstream
+        run: git fetch https://github.com/trailhq/Graft.git main:refs/remotes/upstream/main
+      - name: Test updater
+        run: node --test scripts/portable/test-update.mjs
+      - name: Prepare candidate
+        id: prepare
+        run: node scripts/portable/prepare-update.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: steps.prepare.outputs.changed == 'true'
+        with:
+          name: graft-candidate
+          path: ${{ runner.temp }}/graft-candidate.bundle
+          if-no-files-found: error
+          retention-days: 7
+
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            target: win32-x64
+          - os: ubuntu-22.04
+            target: linux-x64
+          - os: macos-15
+            target: darwin-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.base }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: graft-candidate
+          path: .candidate
+      - name: Check out candidate
+        env:
+          CANDIDATE_SHA: ${{ needs.prepare.outputs.sha }}
+        shell: bash
+        run: |
+          git fetch .candidate/graft-candidate.bundle HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$CANDIDATE_SHA"
+          git checkout --detach "$CANDIDATE_SHA"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.11.1'
+          cache: npm
+      - run: npm ci
+      - name: Upstream regression tests
+        run: npm test
+      - name: Verify plugin generation and build runtime
+        run: |
+          node scripts/portable/generate-plugins.mjs
+          git diff --exit-code -- plugins .agents/plugins
+          node scripts/portable/build.mjs
+      - name: Test packaged runtime
+        run: node scripts/portable/test.mjs .portable/graft-${{ matrix.target }}
+      - name: Package setup skill
+        if: matrix.target == 'linux-x64'
+        run: python3 scripts/portable/package-skill.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: matrix.target == 'linux-x64'
+        with:
+          name: graft-setup
+          path: |
+            .portable/graft-setup.zip
+            .portable/graft-setup.zip.sha256
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: graft-${{ matrix.target }}
+          path: |
+            .portable/graft-${{ matrix.target }}.tar.gz
+            .portable/graft-${{ matrix.target }}.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [prepare, build]
+    if: needs.prepare.outputs.changed == 'true'
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.base }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          path: .release
+      - name: Publish tested candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ needs.prepare.outputs.base }}
+          CANDIDATE_SHA: ${{ needs.prepare.outputs.sha }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch .release/graft-candidate/graft-candidate.bundle HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$CANDIDATE_SHA"
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$BASE_SHA"
+          git merge-base --is-ancestor "$BASE_SHA" "$CANDIDATE_SHA"
+          git diff --exit-code "$BASE_SHA" "$CANDIDATE_SHA" -- .github/workflows
+          [[ "$RELEASE_TAG" =~ ^portable-v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(find .release -name '*.tar.gz' | wc -l)" -eq 3
+          for target in win32-x64 linux-x64 darwin-arm64; do
+            (cd ".release/graft-$target" && sha256sum --check "graft-$target.tar.gz.sha256")
+          done
+          (cd .release/graft-setup && sha256sum --check graft-setup.zip.sha256)
+          git show "$CANDIDATE_SHA:docs/portable-release.md" > .release/notes.md
+          git push origin "$CANDIDATE_SHA:refs/tags/$RELEASE_TAG"
+          gh release create "$RELEASE_TAG" .release/graft-*/*.tar.gz .release/graft-*/*.sha256 .release/graft-setup/graft-setup.zip --verify-tag --title "Graft portable ${RELEASE_TAG#portable-v}" --notes-file .release/notes.md
+          # Users only see the new plugin version once its downloads exist.
+          git push origin "$CANDIDATE_SHA:refs/heads/main"

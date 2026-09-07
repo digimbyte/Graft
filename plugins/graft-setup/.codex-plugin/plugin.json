@@ -1,0 +1,20 @@
+{
+  "name": "graft-setup",
+  "version": "0.1.0",
+  "description": "Set up local Graft code navigation with repository guidance, portable CLI helpers, and approval before installing the full MCP integration.",
+  "author": {
+    "name": "digimbyte"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/digimbyte/Graft",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Graft Setup",
+    "shortDescription": "Set up local code navigation with your approval.",
+    "longDescription": "Guides repository setup and provides portable Graft CLI helpers. The full six-tool service requires a separate local MCP plugin; installation is explained and requires your approval. Supports Windows x64, Linux x64, and Apple Silicon Macs.",
+    "developerName": "digimbyte",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Check this repository and help me set up Graft. Ask before installing the full MCP integration."
+  }
+}

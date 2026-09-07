@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && 'portable-publish' || format('portable-ci-{0}', github.ref) }}
+  cancel-in-progress: false
+
 jobs:
   build:
     strategy:
@@ -42,6 +46,17 @@ jobs:
         run: node scripts/portable/build.mjs
       - name: Exercise the packaged runtime
         run: node scripts/portable/test.mjs .portable/graft-${{ matrix.target }}
+      - name: Package setup skill
+        if: matrix.target == 'linux-x64'
+        run: python3 scripts/portable/package-skill.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: matrix.target == 'linux-x64'
+        with:
+          name: graft-setup
+          path: |
+            .portable/graft-setup.zip
+            .portable/graft-setup.zip.sha256
+          if-no-files-found: error
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: graft-${{ matrix.target }}
