@@ -68,14 +68,14 @@ function advertised(root: string, dirOverride?: string): typeof TOOLS {
  * resolves package.json relative to the calling module, and from `dist/mcp/` that
  * lookup misses. The caller already knows it.
  */
-export function startMcpServer(root: string, dirOverride?: string, version = '0'): void {
+export function startMcpServer(root: string, dirOverride?: string, version = '0', opts: { upkeep?: boolean } = {}): void {
   // The self-maintenance pass, run once at boot. This is the ONLY channel that
   // reaches hosts with no hook support (Cursor, and any plain MCP client): it
   // refreshes rule files an older `graft init` wrote, and kicks off the cached
   // registry check. Both are fail-soft, and the resulting lines ride along in
   // `instructions` below — stdout is protocol-only, so there is nowhere else to
   // put them. Never blocks: the registry fetch happens in a detached child.
-  const upkeep = runUpkeep(root, runningVersion()).lines;
+  const upkeep = opts.upkeep === false ? [] : runUpkeep(root, runningVersion()).lines;
   for (const line of upkeep) console.error(line);
   // Same deal for the telemetry queue: flushed from a detached child at boot, so
   // a Cursor user who never touches the CLI still gets their events out.

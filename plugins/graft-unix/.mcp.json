@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "graft": {
+      "command": "sh",
+      "args": [
+        "${CODEX_PLUGIN_ROOT}/launch.sh",
+        "mcp"
+      ],
+      "startup_timeout_sec": 300,
+      "tool_timeout_sec": 180,
+      "env": {
+        "DO_NOT_TRACK": "1"
+      }
+    }
+  }
+}

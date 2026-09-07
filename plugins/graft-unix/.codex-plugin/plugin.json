@@ -1,0 +1,21 @@
+{
+  "name": "graft-unix",
+  "version": "0.1.0",
+  "description": "Graft code search and caller tracing for Linux x64 / macOS ARM64, with a prebuilt runtime.",
+  "author": {
+    "name": "digimbyte"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/digimbyte/Graft",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Graft (Linux x64 / macOS ARM64)",
+    "shortDescription": "Local code navigation without compiler setup.",
+    "longDescription": "Downloads a versioned runtime with Node and compiled parsers. Indexes the current Git repository locally. No npm installation or model API key required.",
+    "developerName": "digimbyte",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Map this repository and trace the callers relevant to my change."
+  }
+}

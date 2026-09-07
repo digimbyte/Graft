@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "graft": {
+      "command": "powershell.exe",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "${CODEX_PLUGIN_ROOT}/launch.ps1",
+        "mcp"
+      ],
+      "startup_timeout_sec": 300,
+      "tool_timeout_sec": 180,
+      "env": {
+        "DO_NOT_TRACK": "1"
+      }
+    }
+  }
+}

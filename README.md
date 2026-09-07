@@ -1,3 +1,8 @@
+> **Portable Codex fork:** Install Graft without npm or compiler setup through
+> the `digimbyte/Graft` plugin marketplace. See [installation and management](docs/portable.md)
+> and [portable releases](https://github.com/digimbyte/Graft/releases).
+> Core Graft development continues at [trailhq/Graft](https://github.com/trailhq/Graft).
+
 <div align="center">
 
 <img src="assets/graft-hero.png" alt="Graft — open-source context layer for large codebases" width="100%"/>

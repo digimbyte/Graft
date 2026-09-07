@@ -1,0 +1,76 @@
+name: Portable runtimes
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'scripts/portable/**', 'plugins/**', '.agents/plugins/**', 'package*.json', '.github/workflows/portable.yml']
+  pull_request:
+    paths: ['src/**', 'scripts/portable/**', 'plugins/**', '.agents/plugins/**', 'package*.json', '.github/workflows/portable.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            target: win32-x64
+          - os: ubuntu-22.04
+            target: linux-x64
+          - os: macos-15
+            target: darwin-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.11.1'
+          cache: npm
+      - run: npm ci
+      - name: Verify generated plugin files
+        run: |
+          node scripts/portable/generate-plugins.mjs
+          git diff --exit-code -- plugins .agents/plugins
+      - name: Build portable archive
+        run: node scripts/portable/build.mjs
+      - name: Exercise the packaged runtime
+        run: node scripts/portable/test.mjs .portable/graft-${{ matrix.target }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: graft-${{ matrix.target }}
+          path: |
+            .portable/graft-${{ matrix.target }}.tar.gz
+            .portable/graft-${{ matrix.target }}.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.repository == 'digimbyte/Graft'
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: graft-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish versioned runtimes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(jq -r .tag scripts/portable/config.json)
+          test "$(find release-assets -name '*.tar.gz' | wc -l)" -eq 3
+          (cd release-assets && sha256sum --check *.sha256)
+          gh release create "$tag" release-assets/* --target "$GITHUB_SHA" --title "Graft portable ${tag#portable-v}" --notes-file docs/portable-release.md

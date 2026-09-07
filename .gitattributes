@@ -1,0 +1,3 @@
+/scripts/portable/*.sh text eol=lf
+/plugins/**/*.sh text eol=lf
+/plugins/**/release.env text eol=lf

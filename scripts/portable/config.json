@@ -1,0 +1,7 @@
+{
+  "version": "0.1.0",
+  "tag": "portable-v0.1.0",
+  "repository": "digimbyte/Graft",
+  "nodeVersion": "24.11.1",
+  "targets": ["win32-x64", "linux-x64", "darwin-arm64"]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "digimbyte-graft",
+  "interface": {
+    "displayName": "Graft by digimbyte"
+  },
+  "plugins": [
+    {
+      "name": "graft-windows",
+      "source": {
+        "source": "local",
+        "path": "./plugins/graft-windows"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "graft-unix",
+      "source": {
+        "source": "local",
+        "path": "./plugins/graft-unix"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
