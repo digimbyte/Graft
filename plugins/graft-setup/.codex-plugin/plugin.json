@@ -1,6 +1,6 @@
 {
   "name": "graft-setup",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Set up local Graft code navigation with repository guidance, portable CLI helpers, and approval before installing the full MCP integration.",
   "author": {
     "name": "digimbyte"

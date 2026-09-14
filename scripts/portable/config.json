@@ -1,7 +1,12 @@
 {
-  "version": "0.1.0",
-  "tag": "portable-v0.1.0",
+  "version": "0.1.1",
+  "tag": "portable-v0.1.1",
   "repository": "digimbyte/Graft",
   "nodeVersion": "24.11.1",
-  "targets": ["win32-x64", "linux-x64", "darwin-arm64"]
+  "targets": [
+    "win32-x64",
+    "linux-x64",
+    "darwin-arm64"
+  ],
+  "upstreamCommit": "f9e65396e638e517aecae0d731017f53084d70ed"
 }

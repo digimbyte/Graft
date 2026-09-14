@@ -1,6 +1,6 @@
 {
   "name": "graft-windows",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Graft code search and caller tracing for Windows x64, with a prebuilt runtime.",
   "author": {
     "name": "digimbyte"
