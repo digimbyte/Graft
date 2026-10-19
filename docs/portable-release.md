@@ -1,6 +1,6 @@
-Graft portable 0.1.4 packages upstream Graft 0.21.1.
+Graft portable 0.1.5 packages upstream Graft 0.23.0.
 
-Upstream source: https://github.com/trailhq/Graft/commit/fe30ead39d5e6f0c921018d364da2bdbc9d4b3ad
+Upstream source: https://github.com/trailhq/Graft/commit/ead585b2707055f47f1e97d9b0d4209af5285805
 
 Includes Windows x64, Linux x64, and macOS Apple Silicon runtimes with Node 24.11.1, compiled parsers, and SHA-256 checksums.
 

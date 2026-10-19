@@ -1,6 +1,6 @@
 {
-  "version": "0.1.4",
-  "tag": "portable-v0.1.4",
+  "version": "0.1.5",
+  "tag": "portable-v0.1.5",
   "repository": "digimbyte/Graft",
   "nodeVersion": "24.11.1",
   "targets": [
@@ -8,5 +8,5 @@
     "linux-x64",
     "darwin-arm64"
   ],
-  "upstreamCommit": "fe30ead39d5e6f0c921018d364da2bdbc9d4b3ad"
+  "upstreamCommit": "ead585b2707055f47f1e97d9b0d4209af5285805"
 }
